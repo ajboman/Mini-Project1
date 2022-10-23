@@ -169,16 +169,20 @@ def loginCheck():
                     {'username': username, 'password': password})
         if (cursor.fetchone()) == None:
             # they are neither artist nor user so ask to create account
+            return
         else:
             #display artist screen
+            return
     else:
         # then user exists so check if they are also an artist
         cursor.execute("SELECT aid FROM artists WHERE aid = :username AND pwd =:password",
                     {'username': username, 'password': password})
         if (cursor.fetchone()) == None:
             # then user is not an artist
+            return
         else:
             # then they are an artist and user let them choose 
+            return
     return
 
 
