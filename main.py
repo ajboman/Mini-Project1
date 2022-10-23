@@ -1,5 +1,6 @@
 import sqlite3
-#test
+import os
+
 
 connection = None
 cursor = None
@@ -141,13 +142,15 @@ def insert_data():
 
     insert_users =  '''
                         INSERT INTO users(uid, name, pwd) VALUES
-                            ('adam', 'adam', 'boman');
+                            ('adam', 'adam', 'pwd'),
+                            ('kyle', 'kyle', 'password');
                     '''
 
 
     insert_artists= '''
                         INSERT INTO artists(aid, name, nationality, pwd) VALUES
-                            ('anna', 'anna', 'german', 'poop');
+                            ('anna', 'anna', 'german', 'pass'),
+                            ('adam', 'adam', 'canadian', 'pwd');
                     '''
 
     cursor.execute(insert_users)
@@ -155,11 +158,73 @@ def insert_data():
     connection.commit()
     return
 
+def clear_terminal():
+    os.system('cls' if os.name == 'nt' else 'clear')
+    return
 
-def loginCheck():
+def draw_login_screen():
+    clear_terminal()
+    print("---UAtify---")
+    return
+
+def draw_user_screen():
+    clear_terminal()
+    print('Select an option: ')
+    print('1. Start a session.')
+    print('2. Search for songs and playlists.')
+    print('3. Search for artists.')
+    print('4. End session.')
+    user_choice = input('')
+    if user_choice == '1': # start a session
+        return
+    elif user_choice == '2': # search for songs and playlists
+        return
+    elif user_choice == '3': # search for artists
+        return
+    else: # user choice == 4 # end session and return to login screen
+        return
+    return
+
+def draw_artist_screen():
+    clear_terminal()
+    print('Select an option: ')
+    print('1. Add a song.')
+    print('2. Find top fans and playlists.')
+    artist_choice = input('')
+    if artist_choice == '1':
+        return
+    elif artist_choice == '2':
+        return
+    return
+
+
+def create_account():
     global connection, cursor
-    username = input("Username: ")
-    password = input("Password: ")
+    clear_terminal()
+    print('Account not found. Must create a new account.')
+    new_user_id = input("Enter a unique user ID: ")
+    cursor.execute('SELECT * FROM users WHERE uid = :new_user_id', {'new_user_id': new_user_id})
+    while (cursor.fetchone() != None):
+        # if cursor.fetchone() != none then the user id is not unique
+        clear_terminal()
+        print('Account not found. Must create a new account.')
+        print("Error: User ID not unique")
+        new_user_id = input("Enter a unique user ID: ")
+        cursor.execute('SELECT * FROM users WHERE uid = :new_user_id', {'new_user_id': new_user_id})
+    clear_terminal()
+    print('Account not found. Must create a new account.')
+    new_user_name = input("Successful Unique User ID\nEnter a name:")
+    new_user_pwd = input("Enter a password: ")
+    cursor.execute('''INSERT INTO users(uid, name, pwd) Values 
+                            (:id, :name, :pwd)''',
+                            {'id': new_user_id, 'name': new_user_name, 'pwd': new_user_pwd})
+    return
+
+def login_check():
+    # verifies the login information
+    global connection, cursor
+    username = input("Enter a Username: ")
+    password = input("Enter a Password: ")
     # check if they are a user
     cursor.execute("SELECT uid FROM users WHERE uid = :username AND pwd = :password;", 
                     {'username': username, 'password': password})
@@ -168,10 +233,13 @@ def loginCheck():
         cursor.execute("SELECT aid FROM artists WHERE aid = :username AND pwd =:password",
                     {'username': username, 'password': password})
         if (cursor.fetchone()) == None:
-            # they are neither artist nor user so ask to create account
+            # they are neither artist nor user so ask to create account then display user screen
+            create_account()
+            draw_user_screen()
             return
         else:
             #display artist screen
+            draw_artist_screen()
             return
     else:
         # then user exists so check if they are also an artist
@@ -179,9 +247,22 @@ def loginCheck():
                     {'username': username, 'password': password})
         if (cursor.fetchone()) == None:
             # then user is not an artist
+            draw_user_screen()
             return
         else:
-            # then they are an artist and user let them choose 
+            # then they are an artist and user let them choose
+            clear_terminal()
+            print('Would you like to login as user or artist?')
+            choice = ''
+            while (choice.upper() != 'ARTIST') and (choice.upper() != 'USER'):
+                choice = input('')
+            if choice.upper() == 'ARTIST':
+                #draw artist screen
+                draw_artist_screen()
+            else:
+                #draw user screen
+                draw_user_screen()
+
             return
     return
 
@@ -196,7 +277,9 @@ def main():
     define_tables()
     insert_data()
 
-    loginCheck()
+    draw_login_screen()
+
+    login_check()
 
     connection.commit()
     connection.close()
