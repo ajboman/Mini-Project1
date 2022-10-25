@@ -24,7 +24,7 @@ def create_account():
     db.insert_new_user(new_user_id, new_user_name, new_user_pwd)
 
 
-def draw_user_screen():
+def draw_user_screen(username):
     clear_terminal()
     print('Select an option: ')
     print('1. Start a session.')
@@ -33,6 +33,7 @@ def draw_user_screen():
     print('4. End session.')
     user_choice = input('')
     if user_choice == '1': # start a session
+        db.start_session(username)
         return
     elif user_choice == '2': # search for songs and playlists
         return
@@ -65,11 +66,11 @@ def login_check():
     result = db.check_username_and_password(username, password)
     if result == 0:
         create_account()
-        draw_user_screen()
+        draw_user_screen(username)
     elif result == 1:
         draw_artist_screen()
     elif result == 2:
-        draw_user_screen()
+        draw_user_screen(username)
     elif result == 3:
         # then they are an artist and user let them choose
         clear_terminal()
@@ -82,7 +83,7 @@ def login_check():
             draw_artist_screen()
         else:
             #draw user screen
-            draw_user_screen()
+            draw_user_screen(username)
     return
 
 

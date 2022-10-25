@@ -213,3 +213,19 @@ def insert_new_user(uid, name, pwd):
                             (:uid, :name, :pwd)''',
                             {'uid': uid, 'name': name, 'pwd': pwd})
     return # add error check here
+
+# starts a session by appending new values to the sessions table
+# a username is passed
+def start_session(username):
+    global connection, cursor
+    
+    # get uid
+    cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
+    uid = cursor.fetchone()
+    
+    cursor.execute('''
+                    INSERT INTO sessions(uid, sno, start, end)
+                    VALUES (:uid, ROWID, DATE('now'), NULL); 
+                   ''', {'uid': uid})
+    connection.commit()
+    return # I DIDNT TEST THIS YET
