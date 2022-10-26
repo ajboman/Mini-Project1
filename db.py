@@ -229,3 +229,15 @@ def start_session(username):
                    ''', {'uid': uid})
     connection.commit()
     return # I DIDNT TEST THIS YET
+
+
+def search_artists(keywords):
+    global connection, cursor
+
+    # get LIKE artists
+    cursor.execute('''  SELECT name, nationality 
+                        FROM artists 
+                        WHERE name = :keyword''',
+                        {'keyword':keywords[0]})
+    artist = cursor.fetchone()
+    return artist

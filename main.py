@@ -3,6 +3,21 @@ import os
 import db
 import sys
 
+def search_for_artist():
+    # currently only returns the first artist, no other functionality
+    exit_str = 'exit'
+    searching = True
+    clear_terminal()
+    print('Searching For Artists:')
+    while (searching):
+        user_input = input('Enter Keywords to Search or Exit to leave: \n')
+        user_keywords = user_input.split()
+        if (len(user_keywords) == 1 and user_input.upper() == exit_str.upper()):
+            searching = False
+            continue
+        artist = db.search_artists(user_keywords)
+        print(artist)
+    return
 
 def draw_screen(user):
     if user['user_type'] == 0:
@@ -46,6 +61,10 @@ def create_account():
     new_user_pwd = input("Enter a password: ")
     db.insert_new_user(new_user_id, new_user_name, new_user_pwd)
 
+def start_session(username):
+    db.start_session(username)
+    return
+
 
 def draw_user_screen(username):
     user_choice = ''
@@ -60,11 +79,12 @@ def draw_user_screen(username):
         print('6. Exit.')
         user_choice = input('')
         if user_choice == '1': # start a session
-            db.start_session(username)
-            continue 
+            start_session(username)
+            continue
         elif user_choice == '2': # search for songs and playlists
             continue
         elif user_choice == '3': # search for artists
+            search_for_artist()
             continue
         elif user_choice == '4': # end session and return to login screen
             continue 
