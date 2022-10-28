@@ -164,12 +164,123 @@ def insert_data():
 
     insert_artists= '''
                         INSERT INTO artists(aid, name, nationality, pwd) VALUES
-                            ('anna', 'anna', 'german', 'pass'),
+                            ('a01', 'Drake', 'Canadian', '0001'),
+                            ('a02', 'Celine Dion', 'Canadian', '0002'),
+                            ('a03', 'Avril Lavigne', 'caNaDa', '0003'),
+                            ('a04', 'Rush', 'CAnaDIAN', '0004'),
+                            ('a05', 'The Beatles', 'British', '0005'),
+                            ('a06', 'Jimi Hendrix', 'American', '0006'),
+                            ('a07', 'PSY', 'Korean', '0007'),
+                            ('a08', 'Michael Jackson', 'USA', '0008'),
+                            ('a09', 'Pink Floyd', 'United Kingdom', '0009'),
+                            ('a10', 'Paul McCartney', 'UK', '0010'),
                             ('adam', 'adam', 'canadian', 'pwd');
+                    '''
+
+    insert_songs=   ''' 
+                        INSERT INTO songs(sid, title, duration) VALUES
+                        -- Drake Songs
+                            (0, 'God''s Plan', 198),
+                            (1, 'One Dance', 173),
+                            (2, 'Hotline Bling', 267),
+                            -- Celine Dion Songs
+                            (3, 'My Heart Will Go On', 280),
+                            (4, 'The Power of Love', 342),
+                            (5, 'Because You Loved Me', 273),
+                            -- Avril Lavigne Songs
+                            (6, 'Complicated', 244),
+                            (7, 'Sk8er Boi', 204),
+                            (8, 'Girlfriend', 216),
+                            -- Rush Songs
+                            (9, 'Tom Sawyer', 276),
+                            (10, 'Limelight', 259),
+                            (11, 'The Spirit of Radio', 299),
+                            -- Beatles Songs
+                            (12, 'I Am The Walrus', 275),
+                            (13, 'Why Don''t We Do It In The Road?', 101),
+                            (14, 'Everybody''s Got Something To Hide Except Me And My Monkey', 144),
+                            -- Jimi Hendrix Songs
+                            (15, 'Purple Haze', 170),
+                            (16, 'All Along the Watchtower', 240),
+                            (17, 'Hey Joe', 210),
+                            -- PSY Songs
+                            (18, 'Gangnam Style', 219),
+                            (19, 'Gentleman', 194),
+                            (20, 'That That', 174),
+                            -- Michael Jackson Songs
+                            (21, 'This Girl is Mine', 293), -- Alongside Paul McCartney
+                            (22, 'Off the Wall', 246),
+                            (23, 'Man in the Mirror', 318),
+                            (24, 'Who Is It', 393),
+                            (25, 'You Rock My World', 337),
+                            (26, 'Don''t Matter To Me', 245), -- Alongside Drake
+                            -- Pink Floyd Songs
+                            (27, 'Dogs', 1026),
+                            (28, 'Us and Them', 469),
+                            (29, 'Comfortably Numb', 382),
+                            -- Paul McCartney Songs
+                            (30, 'Maybe I''m Amazed', 229),
+                            (31, 'Live and Let Die', 192),
+                            -- 'Band on the Run' has NO listeners, and NOT IN ANY PLAYLIST
+                            (32, 'Band on the Run', 313);
+                    '''
+
+    insert_perform ='''
+                        INSERT INTO perform(aid, sid) VALUES
+                            -- Drake Songs
+                            ('a01', 0),
+                            ('a01', 1),
+                            ('a01', 2),
+                            -- Celine Dion Songs
+                            ('a02', 3),
+                            ('a02', 4),
+                            ('a02', 5),
+                            -- Avril Lavigne Songs
+                            ('a03', 6),
+                            ('a03', 7),
+                            ('a03', 8),
+                            -- Rush Songs
+                            ('a04', 9),
+                            ('a04', 10),
+                            ('a04', 11),
+                            -- Beatles Songs
+                            ('a05', 12),
+                            ('a05', 13),
+                            ('a05', 14),
+                            -- Jimi Hendrix Songs
+                            ('a06', 15),
+                            ('a06', 16),
+                            ('a06', 17),
+                            -- PSY Songs
+                            ('a07', 18),
+                            ('a07', 19),
+                            ('a07', 20),
+                            -- Michael Jackson Songs
+                            ('a08', 22),
+                            ('a08', 23),
+                            ('a08', 24),
+                            ('a08', 25),
+                            -- Pink Floyd Songs
+                            ('a09', 27),
+                            ('a09', 28),
+                            ('a09', 29),
+                            -- Paul McCartney Songs
+                            ('a10', 30),
+                            ('a10', 31),
+                            ('a10', 32),
+                            -- COLLAB SONGS (2 artists)
+                            -- 'This Girl is Mine' by Michael Jackson & Paul McCartney
+                            ('a08', 21),
+                            ('a10', 21),
+                            -- 'Don't Matter To Me' by Drake & Michael Jackson
+                            ('a01', 26),
+                            ('a08', 26);
                     '''
 
     cursor.execute(insert_users)
     cursor.execute(insert_artists)
+    cursor.execute(insert_songs)
+    cursor.execute(insert_perform)
     connection.commit()
     return
 
@@ -233,11 +344,17 @@ def start_session(username):
 
 def search_artists(keywords):
     global connection, cursor
-
     # get LIKE artists
-    cursor.execute('''  SELECT name, nationality 
-                        FROM artists 
-                        WHERE name = :keyword''',
-                        {'keyword':keywords[0]})
-    artist = cursor.fetchone()
-    return artist
+    artists = []
+    keys = []
+    counter = 0
+    for word in keywords:
+        keys.append(f"a.name LIKE '%{word}%'")
+    your = (' OR ').join(keys)
+    select_string = ''' SELECT a.name, a.nationality
+                        FROM artists a
+                        WHERE ''' + your 
+    cursor.execute(select_string)
+    artists = cursor.fetchall()
+
+    return artists

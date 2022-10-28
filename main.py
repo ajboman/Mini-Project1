@@ -4,7 +4,7 @@ import db
 import sys
 
 def search_for_artist():
-    # currently only returns the first artist, no other functionality
+    # currently returns the artists without order
     exit_str = 'exit'
     searching = True
     clear_terminal()
