@@ -4,11 +4,48 @@ import db
 import sys
 
 
+def get_song_action(songs, index):
+    # SONG ACTIONS
+    # JUST THE CHOICE SELECTION SCREEN can call functions here
+    # NOT DONE. JUST PLACEHOLDER.
+    choice = ''
+    clear_terminal()
+    print(songs[int(index) - 1][0],songs[int(index) - 1][1],songs[int(index) - 1][2])
+    print('1. Listen to this song.')
+    print('2. More information.')
+    print('3. Add to playlist.')
+    print('4. Menu')
+    while choice not in ['1','2','3','4']:
+        choice = input('Select an option: ')
+        if choice.upper() == 'EXIT':
+            return
+    if choice == '1':
+        return
+    elif choice == '2':
+        return
+    elif choice == '3':
+        return
+    elif choice == '4':
+        return
+    return
+
 def draw_artist_info(artist):
+    index = []
+    counter = 1
     artist_info = db.get_artist_info(artist)
+    clear_terminal()
+    print('Songs performed by:', artist[0])
     for song in artist_info:
-        print(song)
-    
+        print(str(counter) + '.', song[0], song[1], song[2])
+        counter += 1
+    for i in range(len(artist_info)):
+        index += str(i + 1)
+    choice = '-1'
+    while choice not in index:
+        choice = input('Select a Song or Type Exit: ')
+        if choice.upper() == 'EXIT':
+            return
+    get_song_action(artist_info, choice)
     return  
 
 
@@ -40,13 +77,13 @@ def search_for_artist():
     choice = '-1'
     index = []
     for i in range(len(artists)):
-        index += str(i)
+        index += str(i + 1)
     while (choice not in index):
         choice = input('Select an Artists or Type Next for the Next Page: ')
         if choice.upper() == 'NEXT':
             page_num += 1
             draw_artist_list(artists, page_num)
-        draw_artist_info(artists[int(choice)])
+    draw_artist_info(artists[int(choice)-1])
     return
 
 def draw_screen(user):

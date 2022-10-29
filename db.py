@@ -373,12 +373,12 @@ def search_artists(keywords):
 
 
 def get_artist_info(artist):
-    artist_info_query = ''' 
-                            SELECT s.sid, s.title, s.duration 
+    cursor.execute(''' SELECT s.sid, s.title, s.duration 
                             FROM artists a, songs s, perform p
-                            WHERE a.aid = p.aid
+                            WHERE a.name = :artist_name
+                            AND a.aid = p.aid
                             AND p.sid = s.sid
-                        '''
-    cursor.execute(artist_info_query)
+                            GROUP BY s.sid
+                        ''', {'artist_name': artist[0]})
     artist_info = cursor.fetchall()
     return artist_info
