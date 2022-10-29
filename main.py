@@ -4,6 +4,54 @@ import db
 import sys
 
 
+def find_top(aid):
+    # find the top fans and playlists
+    top_fans = db.find_top_fans(aid)
+    top_playlists = db.find_top_playlists(aid)
+    
+    return
+
+def check_valid_features(features):
+    if len(features) == 0:
+        return True
+    for item in features:
+        if len(item) > 4:
+            return False
+        elif not db.check_artist_aid(item):
+            return False
+    return True
+            
+
+def add_song(username):
+    # TO DO: add featuring artists
+    user_input = ''
+    features = []
+    valid_features = False
+    unique = False
+    clear_terminal()
+    print('Adding a Song.')
+    while (not unique):
+        title = input('Title: ')
+        duration = input('Duration: ')
+        while not duration.isdigit(): # make sure an integer is input
+            clear_terminal()
+            print('Adding a Song.')
+            print('Title: ' + title)
+            print('Error: Must be an integer.')
+            duration = input('Duration: ')
+        unique = db.check_unique_title_dur(title, duration)
+        if not unique:
+            print("Error: Song Title and Duration not Unique.\n Please Try Again.")
+    while (not valid_features):
+        feature_input = input("Enter Contributing Artist's IDs.\nPress Enter To Skip.\n ")
+        features = feature_input.split()
+        valid_features = check_valid_features(features)
+        if not valid_features:
+            print("ERROR: Invalid Artist ID. Please Try Again.")
+    song_id = db.generate_sid()
+    db.add_new_song(song_id, title, duration, username, features)
+    return
+
 def get_song_action(songs, index):
     # SONG ACTIONS
     # JUST THE CHOICE SELECTION SCREEN can call functions here
@@ -91,7 +139,7 @@ def draw_screen(user):
         create_account()
         draw_user_screen(user['username'])
     elif user['user_type'] == 1:
-        draw_artist_screen()
+        draw_artist_screen(user['username'])
     elif user['user_type'] == 2:
         draw_user_screen(user['username'])
     elif user['user_type'] == 3:
@@ -103,7 +151,7 @@ def draw_screen(user):
             choice = input('')
         if choice.upper() == 'ARTIST':
             #draw artist screen
-            draw_artist_screen()
+            draw_artist_screen(user['username'])
         else:
             #draw user screen
             draw_user_screen(user['username'])
@@ -115,11 +163,11 @@ def create_account():
     new_user_id = input("Enter a unique user ID: ")
     user_check = db.check_unique_user(new_user_id)
     
-    while (user_check == False):
+    while (user_check == False or len(new_user_id) > 4):
         # if cursor.fetchone() != none then the user id is not unique
         clear_terminal()
         print('Account not found. Must create a new account.')
-        print("Error: User ID not unique")
+        print("Error: Must be 4 or less characters and unique.")
         new_user_id = input("Enter a unique user ID: ")
         user_check = db.check_unique_user(new_user_id)    
     clear_terminal()
@@ -162,7 +210,7 @@ def draw_user_screen(username):
     return 
 
 
-def draw_artist_screen():
+def draw_artist_screen(username):
     artist_choice = ''
     while (artist_choice not in ['3','4']):
         clear_terminal()
@@ -173,8 +221,10 @@ def draw_artist_screen():
         print('4. Exit.')
         artist_choice = input('')
         if artist_choice == '1':
+            add_song(username)
             continue 
         elif artist_choice == '2':
+            find_top(username)
             continue 
         elif artist_choice == '3': # logout
             continue 
@@ -187,7 +237,12 @@ def draw_artist_screen():
 def login():
     # verifies the login information
     clear_terminal()
+    username = '12345'
     username = input("Enter a Username: ")
+    while len(username) > 4:
+        clear_terminal()
+        print("ERROR: Must be 4 characters or less.")
+        username = input("Enter a Username: ")
     password = input("Enter a Password: ")
     # check if they are a user
     result = db.check_username_and_password(username, password)
@@ -203,16 +258,12 @@ def main():
     path = sys.argv[1]
     db.connect(path)
 
-    db.drop_tables()
-    db.define_tables()
-    db.insert_data()
 
     playing = True
     while (playing):
         # user ={'user_type':result, 'username':username, 'password':password}
         user = login() 
         draw_screen(user)
-
 
 
     db.commit_connection()

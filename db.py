@@ -29,262 +29,6 @@ def close_connection():
     return
 
 
-
-def define_tables():
-    # defines the tables to be used for this project
-    global connection, cursor
-
-    users_query =   ''' 
-                        CREATE TABLE users (
-                                uid CHAR(4),
-                                name TEXT,
-                                pwd TEXT,
-                                PRIMARY KEY (uid)
-                                );
-                    '''
-
-    songs_query =   ''' 
-                        CREATE TABLE songs (
-                                sid INTEGER,
-                                title TEXT,
-                                duration INTEGER,
-                                PRIMARY KEY (sid)
-                                );
-                    '''
-    
-    sessions_query= ''' 
-                        CREATE TABLE sessions (
-                                uid CHAR(4),
-                                sno INTEGER,
-                                start DATE,
-                                end DATE,
-                                PRIMARY KEY(uid, sno),
-                                FOREIGN KEY (uid) REFERENCES users(uid)
-                                ON DELETE CASCADE
-                                );
-                    '''
-    
-    listen_query=   '''
-                        CREATE TABLE listen (
-                                uid CHAR(4),
-                                sno INTEGER,
-                                sid INTEGER,
-                                cnt REAL,
-                                PRIMARY KEY (uid, sno, sid),
-                                FOREIGN KEY (uid, sno) REFERENCES sessions(uid, sno),
-                                FOREIGN KEY (sid) REFERENCES songs(sid)
-                                );
-                    '''
-
-    playlists_query='''
-                        CREATE TABLE playlists (
-                                pid INTEGER,
-                                title TEXT,
-                                uid CHAR(4),
-                                PRIMARY KEY (pid),
-                                FOREIGN KEY (uid) REFERENCES users(uid)
-                                );
-                    '''
-
-    plinclude_query='''
-                        CREATE TABLE plinclude(
-                                pid INTEGER,
-                                sid INTEGER,
-                                sorder INTEGER,
-                                PRIMARY KEY (pid, sid),
-                                FOREIGN KEY (pid) REFERENCES playlists(pid),
-                                FOREIGN KEY (sid) REFERENCES songs(sid)
-                                );
-                    '''
-
-    artists_query=  '''
-                        CREATE TABLE artists(
-                                aid CHAR(4),
-                                name TEXT,
-                                nationality TEXT,
-                                pwd TEXT,
-                                PRIMARY KEY (aid)
-                                );
-                    '''
-
-    perform_query=  '''
-                        CREATE TABLE perform(
-                                aid CHAR(4),
-                                sid INTEGER,
-                                PRIMARY KEY (aid, sid),
-                                FOREIGN KEY (aid) REFERENCES artists(aid),
-                                FOREIGN KEY (sid) REFERENCES songs(sid)
-                                );
-                    '''
-    cursor.execute(users_query)
-    cursor.execute(songs_query)
-    cursor.execute(sessions_query)
-    cursor.execute(listen_query)
-    cursor.execute(playlists_query)
-    cursor.execute(plinclude_query)
-    cursor.execute(artists_query)
-    cursor.execute(perform_query)
-    connection.commit()
-    return
-
-
-def drop_tables():
-    # drops tables if they exist
-    global connection, cursor
-
-    drop_users = "DROP TABLE IF EXISTS users; "
-    drop_songs = "DROP TABLE IF EXISTS songs; "
-    drop_sessions = "DROP TABLE IF EXISTS sessions; "
-    drop_listen = "DROP TABLE IF EXISTS listen; "
-    drop_playlists = "DROP TABLE IF EXISTS playlists; "
-    drop_plinclude = "DROP TABLE IF EXISTS plinclude ; "
-    drop_artists = "DROP TABLE IF EXISTS artists; "
-    drop_perform = "DROP TABLE IF EXISTS perform; "
-
-    cursor.execute(drop_users)
-    cursor.execute(drop_songs)
-    cursor.execute(drop_sessions)
-    cursor.execute(drop_listen)
-    cursor.execute(drop_playlists)
-    cursor.execute(drop_plinclude)
-    cursor.execute(drop_artists)
-    cursor.execute(drop_perform)
-    return
-
-
-def insert_data(): 
-    global connection, cursor
-
-    insert_users =  '''
-                        INSERT INTO users(uid, name, pwd) VALUES
-                            ('adam', 'adam', 'pwd'),
-                            ('kyle', 'kyle', 'password');
-                    '''
-
-
-    insert_artists= '''
-                        INSERT INTO artists(aid, name, nationality, pwd) VALUES
-                            ('a01', 'Drake', 'Canadian', '0001'),
-                            ('a02', 'Celine Dion', 'Canadian', '0002'),
-                            ('a03', 'Avril Lavigne', 'caNaDa', '0003'),
-                            ('a04', 'Rush', 'CAnaDIAN', '0004'),
-                            ('a05', 'The Beatles', 'British', '0005'),
-                            ('a06', 'Jimi Hendrix', 'American', '0006'),
-                            ('a07', 'PSY', 'Korean', '0007'),
-                            ('a08', 'Michael Jackson', 'USA', '0008'),
-                            ('a09', 'Pink Floyd', 'United Kingdom', '0009'),
-                            ('a10', 'Paul McCartney', 'UK', '0010'),
-                            ('adam', 'adam', 'canadian', 'pwd');
-                    '''
-
-    insert_songs=   ''' 
-                        INSERT INTO songs(sid, title, duration) VALUES
-                        -- Drake Songs
-                            (0, 'God''s Plan', 198),
-                            (1, 'One Dance', 173),
-                            (2, 'Hotline Bling', 267),
-                            -- Celine Dion Songs
-                            (3, 'My Heart Will Go On', 280),
-                            (4, 'The Power of Love', 342),
-                            (5, 'Because You Loved Me', 273),
-                            -- Avril Lavigne Songs
-                            (6, 'Complicated', 244),
-                            (7, 'Sk8er Boi', 204),
-                            (8, 'Girlfriend', 216),
-                            -- Rush Songs
-                            (9, 'Tom Sawyer', 276),
-                            (10, 'Limelight', 259),
-                            (11, 'The Spirit of Radio', 299),
-                            -- Beatles Songs
-                            (12, 'I Am The Walrus', 275),
-                            (13, 'Why Don''t We Do It In The Road?', 101),
-                            (14, 'Everybody''s Got Something To Hide Except Me And My Monkey', 144),
-                            -- Jimi Hendrix Songs
-                            (15, 'Purple Haze', 170),
-                            (16, 'All Along the Watchtower', 240),
-                            (17, 'Hey Joe', 210),
-                            -- PSY Songs
-                            (18, 'Gangnam Style', 219),
-                            (19, 'Gentleman', 194),
-                            (20, 'That That', 174),
-                            -- Michael Jackson Songs
-                            (21, 'This Girl is Mine', 293), -- Alongside Paul McCartney
-                            (22, 'Off the Wall', 246),
-                            (23, 'Man in the Mirror', 318),
-                            (24, 'Who Is It', 393),
-                            (25, 'You Rock My World', 337),
-                            (26, 'Don''t Matter To Me', 245), -- Alongside Drake
-                            -- Pink Floyd Songs
-                            (27, 'Dogs', 1026),
-                            (28, 'Us and Them', 469),
-                            (29, 'Comfortably Numb', 382),
-                            -- Paul McCartney Songs
-                            (30, 'Maybe I''m Amazed', 229),
-                            (31, 'Live and Let Die', 192),
-                            -- 'Band on the Run' has NO listeners, and NOT IN ANY PLAYLIST
-                            (32, 'Band on the Run', 313);
-                    '''
-
-    insert_perform ='''
-                        INSERT INTO perform(aid, sid) VALUES
-                            -- Drake Songs
-                            ('a01', 0),
-                            ('a01', 1),
-                            ('a01', 2),
-                            -- Celine Dion Songs
-                            ('a02', 3),
-                            ('a02', 4),
-                            ('a02', 5),
-                            -- Avril Lavigne Songs
-                            ('a03', 6),
-                            ('a03', 7),
-                            ('a03', 8),
-                            -- Rush Songs
-                            ('a04', 9),
-                            ('a04', 10),
-                            ('a04', 11),
-                            -- Beatles Songs
-                            ('a05', 12),
-                            ('a05', 13),
-                            ('a05', 14),
-                            -- Jimi Hendrix Songs
-                            ('a06', 15),
-                            ('a06', 16),
-                            ('a06', 17),
-                            -- PSY Songs
-                            ('a07', 18),
-                            ('a07', 19),
-                            ('a07', 20),
-                            -- Michael Jackson Songs
-                            ('a08', 22),
-                            ('a08', 23),
-                            ('a08', 24),
-                            ('a08', 25),
-                            -- Pink Floyd Songs
-                            ('a09', 27),
-                            ('a09', 28),
-                            ('a09', 29),
-                            -- Paul McCartney Songs
-                            ('a10', 30),
-                            ('a10', 31),
-                            ('a10', 32),
-                            -- COLLAB SONGS (2 artists)
-                            -- 'This Girl is Mine' by Michael Jackson & Paul McCartney
-                            ('a08', 21),
-                            ('a10', 21),
-                            -- 'Don't Matter To Me' by Drake & Michael Jackson
-                            ('a01', 26),
-                            ('a08', 26);
-                    '''
-
-    cursor.execute(insert_users)
-    cursor.execute(insert_artists)
-    cursor.execute(insert_songs)
-    cursor.execute(insert_perform)
-    connection.commit()
-    return
-
-
 def check_username_and_password(username, password):
     global connection, cursor
     cursor.execute("SELECT uid FROM users WHERE uid = :username AND pwd = :password;", 
@@ -373,6 +117,7 @@ def search_artists(keywords):
 
 
 def get_artist_info(artist):
+    global connection, cursor
     cursor.execute(''' SELECT s.sid, s.title, s.duration 
                             FROM artists a, songs s, perform p
                             WHERE a.name = :artist_name
@@ -382,3 +127,98 @@ def get_artist_info(artist):
                         ''', {'artist_name': artist[0]})
     artist_info = cursor.fetchall()
     return artist_info
+
+
+def check_unique_title_dur(title, duration):
+    global connection, cursor
+    cursor.execute('''
+                SELECT title, duration
+                FROM songs
+                WHERE title = :title
+                AND duration = :duration
+                ''', {'title':title, 'duration':duration})
+    result = cursor.fetchone()
+    if result == None:
+        return True
+    else:
+        return False
+
+
+def generate_sid():
+    global connection, cursor
+    max_sid_query = '''
+                SELECT MAX(sid)
+                FROM songs
+            '''
+    cursor.execute(max_sid_query)
+    max_sid = cursor.fetchone()[0]
+    new_sid = max_sid + 1
+    return new_sid
+
+def add_new_song(sid, title, duration, aid, features):
+    global connection, cursor
+    # need to add to songs table and perform table
+    # artist info from current login
+    counter = 0
+    cursor.execute( ''' 
+                        INSERT INTO songs(sid, title, duration) VALUES
+                            (:sid, :title, :duration);
+                    ''', {'sid':sid, 'title':title, 'duration':duration}
+                    )
+    cursor.execute( '''
+                        INSERT INTO perform(aid, sid) VALUES
+                            (:aid, :sid);
+                    ''', {'aid': aid, 'sid':sid}
+                    )
+    if len(features) != 0:
+        features_query = ''' INSERT INTO perform(aid, sid) VALUES '''
+        for item in features:
+            if len(features) == 1:
+                features_query += "('" + item + "', '"+ str(sid) + "');"
+            elif counter == len(features) - 1:
+                features_query += "('" + item + "', '" + str(sid) + "');"
+            else:
+                features_query += "('" + item + "', '"+ str(sid) + "'),"
+            counter += 1 
+        cursor.execute(features_query)
+
+    connection.commit()
+    return
+
+def check_artist_aid(aid):
+    global connection, cursor
+    cursor.execute( '''
+                        SELECT aid FROM artists WHERE aid = :aid
+                    ''', {'aid': aid})
+    result = cursor.fetchone()
+    if result == None:
+        return False
+    else:
+        return True
+
+def find_top_fans(aid):
+    global connection, cursor
+    cursor.execute('''
+                    SELECT q.uid, q.name FROM (
+                        SELECT u.uid, u.name, SUM(l.cnt) as rank
+                        FROM users u, artists a, perform p, listen l, songs s
+                        WHERE l.sid = s.sid
+                        AND p.aid = a.aid
+                        AND p.sid = s.sid
+                        AND l.uid = u.uid
+                        AND a.aid = :aid
+                        GROUP BY u.uid, u.name
+                        ORDER BY rank DESC
+                        LIMIT 3) q
+            ''', {'aid':aid})
+    fans = cursor.fetchall()
+    return fans
+
+
+def find_top_playlists(aid):
+    global connection, cursor
+    # cursor.execute( '''
+    #                     SELECT 
+    #                 '''
+    # )
+    return
