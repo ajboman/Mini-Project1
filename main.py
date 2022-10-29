@@ -3,20 +3,50 @@ import os
 import db
 import sys
 
+
+def draw_artist_info(artist):
+    artist_info = db.get_artist_info(artist)
+    for song in artist_info:
+        print(song)
+    
+    return  
+
+
+def draw_artist_list(artists, page_num):
+    counter = page_num * 5
+    for item in [1,2,3,4,5]:
+        if counter == page_num*5 + 5:
+            continue
+        if counter + 1 > len(artists):
+            continue
+        print(str(counter+1) + '.', artists[counter][0], artists[counter][1], artists[counter][2])
+        counter += 1
+    
+
+
 def search_for_artist():
     # currently returns the artists without order
     exit_str = 'exit'
-    searching = True
+    page_num = 0
     clear_terminal()
     print('Searching For Artists:')
-    while (searching):
-        user_input = input('Enter Keywords to Search or Exit to leave: \n')
-        user_keywords = user_input.split()
-        if (len(user_keywords) == 1 and user_input.upper() == exit_str.upper()):
-            searching = False
-            continue
-        artist = db.search_artists(user_keywords)
-        print(artist)
+    user_input = input('Enter Keywords to Search or Exit to leave: \n')
+    user_keywords = user_input.split()
+    if (len(user_keywords) == 1 and user_input.upper() == exit_str.upper()):
+        searching = False
+        return
+    artists = db.search_artists(user_keywords)
+    draw_artist_list(artists, page_num)
+    choice = '-1'
+    index = []
+    for i in range(len(artists)):
+        index += str(i)
+    while (choice not in index):
+        choice = input('Select an Artists or Type Next for the Next Page: ')
+        if choice.upper() == 'NEXT':
+            page_num += 1
+            draw_artist_list(artists, page_num)
+        draw_artist_info(artists[int(choice)])
     return
 
 def draw_screen(user):

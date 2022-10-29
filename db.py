@@ -345,16 +345,40 @@ def start_session(username):
 def search_artists(keywords):
     global connection, cursor
     # get LIKE artists
-    artists = []
     keys = []
     counter = 0
     for word in keywords:
-        keys.append(f"a.name LIKE '%{word}%'")
-    your = (' OR ').join(keys)
-    select_string = ''' SELECT a.name, a.nationality
-                        FROM artists a
-                        WHERE ''' + your 
-    cursor.execute(select_string)
+        keys.append(f"SELECT art.name, art.nationality, {counter + 1} as n FROM artists art WHERE art.name LIKE '%{word}%'")
+        keys.append(f"SELECT art.name, art.nationality, {counter + len(keywords) + 1} as n FROM songs s, artists art, perform p WHERE s.sid = p.sid AND p.aid = art.aid AND s.title LIKE '%{word}%'")
+        counter += 1
+    keywords_query = (' UNION ').join(keys)
+    query = ''' 
+                SELECT name, nationality, COUNT(n) as cnt
+                FROM (''' + keywords_query + ''')
+                GROUP BY name, nationality
+                ORDER BY cnt DESC
+            '''
+    final_query = ''' 
+                        SELECT q1.name, q1.nationality, COUNT(s.title)
+                        FROM (''' + query + ''') q1, songs s, perform p, artists a
+                        WHERE q1.name = a.name
+                        AND a.aid = p.aid
+                        AND p.sid = s.sid
+                        GROUP BY q1.name, q1.nationality
+                        ORDER BY q1.cnt DESC
+                     '''
+    cursor.execute(final_query)
     artists = cursor.fetchall()
-
     return artists
+
+
+def get_artist_info(artist):
+    artist_info_query = ''' 
+                            SELECT s.sid, s.title, s.duration 
+                            FROM artists a, songs s, perform p
+                            WHERE a.aid = p.aid
+                            AND p.sid = s.sid
+                        '''
+    cursor.execute(artist_info_query)
+    artist_info = cursor.fetchall()
+    return artist_info
