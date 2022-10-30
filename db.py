@@ -129,14 +129,17 @@ def get_artist_info(artist):
     return artist_info
 
 
-def check_unique_title_dur(title, duration):
+def check_unique_title_dur(title, duration, username):
     global connection, cursor
     cursor.execute('''
-                SELECT title, duration
-                FROM songs
-                WHERE title = :title
-                AND duration = :duration
-                ''', {'title':title, 'duration':duration})
+                SELECT s.title, s.duration
+                FROM songs s, artists a, perform p
+                WHERE s.title = :title
+                AND s.duration = :duration
+                AND s.sid = p.sid
+                AND p.aid = a.aid
+                AND a.aid = :aid
+                ''', {'title':title, 'duration':duration, 'aid': username})
     result = cursor.fetchone()
     if result == None:
         return True
@@ -217,8 +220,18 @@ def find_top_fans(aid):
 
 def find_top_playlists(aid):
     global connection, cursor
-    # cursor.execute( '''
-    #                     SELECT 
-    #                 '''
-    # )
-    return
+    cursor.execute( '''
+                        SELECT pl.pid, pl.title, COUNT(s.sid) as rank
+                        FROM playlists pl, plinclude pli, artists a, songs s, perform p
+                        WHERE pl.pid = pli.pid
+                        AND pli.sid = s.sid
+                        AND s.sid = p.sid
+                        AND p.aid = a.aid
+                        AND a.aid = :aid
+                        GROUP BY pl.pid
+                        ORDER BY rank DESC
+                        LIMIT 3
+                    ''', {'aid':aid}
+    )
+    playlists = cursor.fetchall()
+    return playlists

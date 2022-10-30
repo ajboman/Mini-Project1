@@ -8,7 +8,16 @@ def find_top(aid):
     # find the top fans and playlists
     top_fans = db.find_top_fans(aid)
     top_playlists = db.find_top_playlists(aid)
-    
+    clear_terminal()
+    print('Top Fans:')
+    for item in top_fans:
+        print(item[0], item[1])
+    print('\nTop Playlists:')
+    for item in top_playlists:
+        print(item[0], item[1], item[2])
+    user_input = '-1'
+    while user_input is not '':
+        user_input = input('\nPress Enter To Return\n')
     return
 
 def check_valid_features(features):
@@ -39,7 +48,7 @@ def add_song(username):
             print('Title: ' + title)
             print('Error: Must be an integer.')
             duration = input('Duration: ')
-        unique = db.check_unique_title_dur(title, duration)
+        unique = db.check_unique_title_dur(title, duration, username)
         if not unique:
             print("Error: Song Title and Duration not Unique.\n Please Try Again.")
     while (not valid_features):
