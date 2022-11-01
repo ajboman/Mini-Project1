@@ -272,3 +272,85 @@ def get_playlists_including(song):
                     ''', {'sid':song[0]})
     playlists = cursor.fetchall()
     return playlists
+
+#=========================================================================
+#
+# SEARCH FOR SONGS AND PLAYLISTS
+#
+#=========================================================================
+
+def songs_and_playlists(keywords)
+    global connection, cursor
+
+    # === get the songs query ===
+    keys = []
+    counter = 0
+    
+    for word in keywords:
+        keys.append(f"SELECT s.id, s.title, s.duration, {counter + 1} as n FROM songs s WHERE s.title LIKE '%{word}%'")
+        counter += 1
+    
+    keywords_query1 = (' UNION ').join(keys)
+    songs_query = '''
+                    SELECT sid, title, duration, COUNT(n) as cnt
+                    FROM (''' + keywords_query1 + ''')
+                    GROUP BY name, title, duration
+                    ORDER BY cnt DESC
+                '''
+    
+    # === get the playlists query ===
+    keys = []
+    counter = 0
+
+    for word in keywords:
+        keys.append(f"SELECT p.pid, p.title, {counter + 1} as n FROM playlists p WHERE p.title LIKE '%{word}%'")
+        counter += 1
+
+    keywords_query2 = (' UNION ').join(keys)
+    playlist_query1 = '''
+                        SELECT pid, title, COUNT(n) as cnt
+                        FROM (''' + keywords_query2 + ''')
+                        GROUP BY pid, title
+                        ORDER BY cnt DESC
+                      '''
+    
+    playlist_query2 = '''
+                        SELECT q.pid, q.title, sum(s.duration) as duration
+                        FROM (''' + playlist_query1 + ''') q, songs s, playlists p, plinclude pl
+                        WHERE p.pid = pl.pid AND pl.sid = songs.sid
+                        GROUP BY q.pid, q.title, s.duration
+                        ORDER BY q.cnt DESC
+                      '''
+    
+    # === combine songs and playlists ===
+    songs_and_playlists = '''
+                            SELECT qs.sid, qs.title, qs.duration, qp.pid, qp.title, qp.duration
+                            FROM (''' + songs_query + ''') qs, (''' + playlist_query2 + ''') as qp
+                            ORDER BY qs.cnt DESC
+                          '''
+    
+    cursors.execute(songs_and_playlists)
+    songs_and_playlists_list = cursor.fetchall()
+    return songs_and_playlists_list
+
+#=========================================================================
+#
+# END SESSION
+#
+#=========================================================================
+
+def end_session(username):
+    global connection, cursor
+    
+    # get uid
+    cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
+    uid = cursor.fetchone()
+    
+    cursor.execute('''
+                        UPDATE session 
+                        SER end = Time('now')
+                        WHERE uid = :uid
+                   ''', {'uid': uid})
+    connection.commit()
+
+#=========================================================================
