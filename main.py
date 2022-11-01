@@ -171,11 +171,14 @@ def search_for_artist():
     page_num = 0
     clear_terminal()
     print('Searching For Artists:')
-    user_input = input('Enter Keywords to Search:\n')
+    user_input = ''
+    while user_input == '':
+        clear_terminal()
+        print('Searching For Artists:')
+        user_input = input('Enter Keywords to Search:\n')
     # split the user_input into a list of the keywords
     user_keywords = user_input.split()
     artists = db.search_artists(user_keywords) # search db for artists like keywords
-    draw_artist_list(artists, page_num) # draw the first page of 5 artists
     choice = '-1'
     index = []
     # create list of index strings based on the number of artists
@@ -183,10 +186,21 @@ def search_for_artist():
         index.append(str(i + 1))
     # ask to select an artist or see another page
     while (choice not in index):
-        choice = input('Type Next to See More or Type Menu to Leave\nSelect an Artist:')
+        clear_terminal()
+        print('Page:', str(page_num + 1))
+        print('Type Next or Back to Change Pages.\nType Menu to Leave.\n')
+        draw_artist_list(artists, page_num)
+        choice = input('\nSelect an Artist:')
         if choice.upper() == 'NEXT':
-            page_num += 1
-            draw_artist_list(artists, page_num)
+            if ((((page_num + 1) *5) + 1) > len(artists)):
+                pass
+            else:
+                page_num += 1
+        elif choice.upper() == 'BACK':
+            if page_num == 0:
+                pass
+            else:
+                page_num -=1
         elif choice.upper() == 'MENU':
             return
     # display the chosen artists info
@@ -255,7 +269,7 @@ def draw_user_screen(username):
         print('5. Logout.')
         print('6. Exit.')
         user_choice = input('')
-        if user_choice == '1': # start a session
+        if user_choice == '1' or user_choice.upper() == 'START': # start a session
             start_session(username)
             continue
         elif user_choice == '2': # search for songs and playlists
@@ -263,11 +277,12 @@ def draw_user_screen(username):
         elif user_choice == '3': # search for artists
             search_for_artist()
             continue
-        elif user_choice == '4': # end session and return to login screen
+        elif user_choice == '4' or user_choice.upper() == 'END': # end session and return to login screen
             continue 
-        elif user_choice == '5': # logout
+        elif user_choice == '5' or user_choice.upper() == 'LOGOUT': # logout
             continue 
-        elif user_choice == '6': # exit
+        elif user_choice == '6' or user_choice.upper() == 'EXIT': # exit
+            # must implement if session: end_session()
             db.commit_connection()
             db.close_connection()
             exit(0)
@@ -285,15 +300,16 @@ def draw_artist_screen(username):
         print('3. Logout.')
         print('4. Exit.')
         artist_choice = input('')
-        if artist_choice == '1': # add song
+        if artist_choice == '1' or artist_choice.upper() == 'ADD': # add song
             add_song(username)
             continue 
-        elif artist_choice == '2': # find top users and playlists
+        elif artist_choice == '2' or artist_choice.upper() == 'FIND': # find top users and playlists
             find_top(username)
             continue 
-        elif artist_choice == '3': # logout
+        elif artist_choice == '3' or artist_choice.upper() == 'LOGOUT': # logout
             continue 
-        else: # artist_choice == '4' #exit
+        elif artist_choice == '4' or artist_choice.upper() == 'EXIT': #exit
+            # must implement if session: end_session()
             db.commit_connection()
             db.close_connection()
             exit(0)
