@@ -3,6 +3,79 @@ import os
 import db
 import sys
 
+#=========================================================================
+#
+# END SESSION
+#
+#=========================================================================
+
+def end_seession(username):
+    db.end_session(username)
+
+#=========================================================================
+#
+# SEARCH FOR SONGS AND PLAYLISTS
+#
+#=========================================================================
+
+def search_for_song_playlist():
+    clear_terminal()
+    
+    user_in = ''
+    while user_in.upper() != 'EXIT':
+        user_in = input("Enter keywords\n")
+        clear_terminal()
+        
+        if user_in.upper() != 'EXIT':
+            keywords = user_in.split()
+            search_res = db.songs_and_playlists(keywords)
+            
+        clear_terminal()
+        song_title = table_control(search_res)
+        song = get_song(song_title, search_res)
+
+        get_song_action(song)
+
+    return
+
+# draws the table and controls user input
+def table_control(sql_list):
+    counter = 0
+    if len(sql_list) < 5:
+        for element in range(len(sql_list)):
+            print_table_line(sql_list, element)
+            user_in = input("SELECT A SONG\n")
+                if user_in.upper() == 'SELECT':
+                    user_in = input("Type the song title you wish to select\n")
+                    return user_in
+    
+    # === prints 5 elements ===       
+    for element in range(len(sql_list)):
+        print_table_line(sql_list, element)
+        counter += 1
+        if (counter % 5) == 0:
+            user_in = input("TYPE 'SELECT' TO SELECT A SONG OR 'NEXT' TO VIEW MORE\n")
+            if user_in.upper() == 'SELECT':
+                user_in = input("Type the song title you wish to select\n")
+                    return user_in
+
+# prints a line to make the table (table_control helper function)
+def print_table_line(sql_list, index):
+    if sql_list[index][0] == '' or sql_list[index][0] == None:
+        print("PLAYLIST: " + sql_list[index][3] + " " + sql_list[index][4] + " " + sql_list[index][4])
+    else:
+        print("SONG: " + sql_list[index][0] + " " + sql_list[index][1] + " " + sql_list[index][2])
+ 
+
+# gets song element from list
+def get_song(song_title, sql_list):
+    for i in range(len(sql_list)):
+        if song_title.upper() == sql_list[i][1].upper()
+            return sql_list[i]
+        else
+            print("song not found")
+
+#=========================================================================
 
 def get_song_info(song):
     # names of artists who performed
