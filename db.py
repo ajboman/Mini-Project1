@@ -68,19 +68,54 @@ def insert_new_user(uid, name, pwd):
 
 # starts a session by appending new values to the sessions table
 # a username is passed
+# def start_session(username):
+#     global connection, cursor
+    
+#     # get uid
+#     cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
+#     uid = cursor.fetchone()
+    
+#     cursor.execute('''
+#                     INSERT INTO sessions(uid, sno, start, end)
+#                     VALUES (:uid, ROWID, DATE('now'), NULL); 
+#                    ''', {'uid': uid})
+#     connection.commit()
+#     return # I DIDNT TEST THIS YET
 def start_session(username):
     global connection, cursor
-    
-    # get uid
-    cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
-    uid = cursor.fetchone()
-    
-    cursor.execute('''
-                    INSERT INTO sessions(uid, sno, start, end)
-                    VALUES (:uid, ROWID, DATE('now'), NULL); 
-                   ''', {'uid': uid})
+    # get unique session number
+    unique_sno = get_unique_sno(username)
+    cursor.execute( '''
+                        INSERT INTO sessions(uid, sno, start, end) VALUES
+                            (:uid, :sno, DATE('now'), NULL)
+                    ''', {'uid':username, 'sno':unique_sno})
     connection.commit()
-    return # I DIDNT TEST THIS YET
+    return 
+
+def print_sessions(username):
+    cursor.execute(''' SELECT * FROM sessions WHERE uid = :uid ''',{'uid':username})
+    results = cursor.fetchall()
+    connection.commit()
+    return
+
+def get_unique_sno(username):
+    # get unique session number
+    global connection, cursor
+    unique_sno = None
+    cursor.execute( '''
+                        SELECT MAX(s.sno)
+                        FROM sessions s, users u
+                        WHERE s.uid = u.uid
+                        AND u.uid = :uid
+                    ''', {'uid':username})
+
+    max_sno = cursor.fetchone()[0]
+
+    if max_sno == None:
+        unique_sno = 1
+    else:
+        unique_sno = max_sno + 1
+    return unique_sno
 
 
 def search_artists(keywords):
@@ -279,7 +314,7 @@ def get_playlists_including(song):
 #
 #=========================================================================
 
-def songs_and_playlists(keywords)
+def songs_and_playlists(keywords):
     global connection, cursor
 
     # === get the songs query ===
@@ -287,15 +322,14 @@ def songs_and_playlists(keywords)
     counter = 0
     
     for word in keywords:
-        keys.append(f"SELECT s.id, s.title, s.duration, {counter + 1} as n FROM songs s WHERE s.title LIKE '%{word}%'")
+        keys.append(f"SELECT s.sid, s.title, s.duration, {counter + 1} as n FROM songs s WHERE s.title LIKE '%{word}%'")
         counter += 1
     
     keywords_query1 = (' UNION ').join(keys)
     songs_query = '''
                     SELECT sid, title, duration, COUNT(n) as cnt
                     FROM (''' + keywords_query1 + ''')
-                    GROUP BY name, title, duration
-                    ORDER BY cnt DESC
+                    GROUP BY sid, title, duration
                 '''
     
     # === get the playlists query ===
@@ -311,25 +345,27 @@ def songs_and_playlists(keywords)
                         SELECT pid, title, COUNT(n) as cnt
                         FROM (''' + keywords_query2 + ''')
                         GROUP BY pid, title
-                        ORDER BY cnt DESC
                       '''
     
     playlist_query2 = '''
-                        SELECT q.pid, q.title, sum(s.duration) as duration
+                        SELECT q.pid, q.title, sum(s.duration) as duration, q.cnt
                         FROM (''' + playlist_query1 + ''') q, songs s, playlists p, plinclude pl
-                        WHERE p.pid = pl.pid AND pl.sid = songs.sid
-                        GROUP BY q.pid, q.title, s.duration
-                        ORDER BY q.cnt DESC
+                        WHERE p.pid = pl.pid 
+                        AND pl.sid = s.sid
+                        AND q.pid = p.pid
+                        AND q.title = p.title
+                        GROUP BY q.pid, q.title
                       '''
     
     # === combine songs and playlists ===
-    songs_and_playlists = '''
-                            SELECT qs.sid, qs.title, qs.duration, qp.pid, qp.title, qp.duration
-                            FROM (''' + songs_query + ''') qs, (''' + playlist_query2 + ''') as qp
-                            ORDER BY qs.cnt DESC
-                          '''
-    
-    cursors.execute(songs_and_playlists)
+    union_query = songs_query + ''' UNION ''' + playlist_query2 + ''' ORDER BY cnt DESC '''
+    final_query = '''
+                    SELECT sid, title, duration 
+                    FROM (''' + union_query + ''')
+                    GROUP BY sid
+                    ORDER BY cnt DESC'''
+                    
+    cursor.execute(final_query)
     songs_and_playlists_list = cursor.fetchall()
     return songs_and_playlists_list
 
@@ -339,18 +375,46 @@ def songs_and_playlists(keywords)
 #
 #=========================================================================
 
+# def end_session(username):
+#     global connection, cursor
+    
+#     # get uid
+#     cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
+#     uid = cursor.fetchone()
+    
+#     cursor.execute('''
+#                         UPDATE sessions 
+#                         SET end = Time('now')
+#                         WHERE uid = :uid
+#                    ''', {'uid': uid})
+#     connection.commit()
+
+
 def end_session(username):
     global connection, cursor
-    
-    # get uid
-    cursor.execute('SELECT uid FROM users WHERE name = :username', {'username': username})
-    uid = cursor.fetchone()
-    
-    cursor.execute('''
-                        UPDATE session 
-                        SER end = Time('now')
-                        WHERE uid = :uid
-                   ''', {'uid': uid})
-    connection.commit()
 
+    cursor.execute('''
+                        UPDATE sessions
+                        SET end = TIME('now')
+                        WHERE uid = :uid 
+                        AND end IS NULL
+                    ''', {'uid':username})
+    connection.commit()
+    return
 #=========================================================================
+
+def check_sessions(username):
+    global connection, cursor
+    session_exist = None
+    cursor.execute( ''' SELECT s.end
+                        FROM sessions s
+                        WHERE s.uid = :uid
+                        AND s.end IS NULL
+                        ''', {'uid':username})
+    results = cursor.fetchall()
+    if len(results) == 0:
+        session_exist = False
+    else:
+        session_exist = True
+
+    return session_exist

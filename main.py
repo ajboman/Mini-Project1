@@ -9,8 +9,16 @@ import sys
 #
 #=========================================================================
 
-def end_seession(username):
-    db.end_session(username)
+def end_session(username):
+    # check if session already started
+    session_exist = db.check_sessions(username)
+    if session_exist:
+        db.end_session(username)
+        input('Session Ended.\nPress Enter To Continue.\n')
+    else:
+        print('No Session To End.')
+        input('Press Enter To Continue.\n')
+    return
 
 #=========================================================================
 #
@@ -20,22 +28,82 @@ def end_seession(username):
 
 def search_for_song_playlist():
     clear_terminal()
-    
+    index = []
+    page_num = 0
+    choice = ''
     user_in = ''
-    while user_in.upper() != 'EXIT':
+    while user_in == '':
         user_in = input("Enter keywords\n")
         clear_terminal()
         
         if user_in.upper() != 'EXIT':
             keywords = user_in.split()
             search_res = db.songs_and_playlists(keywords)
-            
+        else:
+            return
+    # create list of index strings based on the number of songs and playlists
+    for i in range(len(search_res)):
+        index.append(str(i + 1))  
+    # get the user's choice for which song or playlist
+    while (choice not in index):
         clear_terminal()
-        song_title = table_control(search_res)
-        song = get_song(song_title, search_res)
+        print('Page:', str(page_num + 1))
+        print('Type Next or Back to Change Pages.\nType Menu to Leave.\n')
+        draw_songs_and_playlists(search_res, page_num)
+        choice = input('\nSelect a Song or Playlist:')
+        if choice.upper() == 'NEXT':
+            if ((((page_num + 1) *5) + 1) > len(search_res)):
+                pass
+            else:
+                page_num += 1
+        elif choice.upper() == 'BACK':
+            if page_num == 0:
+                pass
+            else:
+                page_num -=1
+        elif choice.upper() == 'MENU':
+            return
 
-        get_song_action(song)
+    song_or_playlist = search_res[int(choice)-1]
+    result = check_song_or_playlist(song_or_playlist) # 0 = song, 1 = playlist 
+    if result == 0:
+        draw_song_info(song_or_playlist)
+    else:
+        draw_playlist_info(song_or_playlist)
 
+    return
+
+def check_song_or_playlist(song_or_playlist):
+    # todo
+    # checks if the item exists as a song or as a playlist
+    # songs have a duration 
+    # playlists have a uid 
+    # return 0 if song, 1 if playlist
+    return
+
+def draw_playlist_info(playlist):
+    # todo
+    # create get_playlist_action()
+    return
+
+def draw_song_info(song):
+    # todo
+    # get song action at the end of this
+    return
+
+
+def draw_songs_and_playlists(songs_and_playlists, page_num):
+    # draws the requested page of songs and playlists 
+    # if no page exists nothing is drawn
+    counter = page_num * 5
+    # prints 5 items
+    for item in [1,2,3,4,5]:
+        if counter == page_num*5 + 5:
+            continue
+        if counter + 1 > len(songs_and_playlists):
+            continue
+        print(str(counter+1) + '.', songs_and_playlists[counter][0], songs_and_playlists[counter][1], songs_and_playlists[counter][2])
+        counter += 1
     return
 
 # draws the table and controls user input
@@ -45,9 +113,9 @@ def table_control(sql_list):
         for element in range(len(sql_list)):
             print_table_line(sql_list, element)
             user_in = input("SELECT A SONG\n")
-                if user_in.upper() == 'SELECT':
-                    user_in = input("Type the song title you wish to select\n")
-                    return user_in
+            if user_in.upper() == 'SELECT':
+                user_in = input("Type the song title you wish to select\n")
+                return user_in
     
     # === prints 5 elements ===       
     for element in range(len(sql_list)):
@@ -57,7 +125,7 @@ def table_control(sql_list):
             user_in = input("TYPE 'SELECT' TO SELECT A SONG OR 'NEXT' TO VIEW MORE\n")
             if user_in.upper() == 'SELECT':
                 user_in = input("Type the song title you wish to select\n")
-                    return user_in
+                return user_in
 
 # prints a line to make the table (table_control helper function)
 def print_table_line(sql_list, index):
@@ -70,9 +138,9 @@ def print_table_line(sql_list, index):
 # gets song element from list
 def get_song(song_title, sql_list):
     for i in range(len(sql_list)):
-        if song_title.upper() == sql_list[i][1].upper()
+        if song_title.upper() == sql_list[i][1].upper():
             return sql_list[i]
-        else
+        else:
             print("song not found")
 
 #=========================================================================
@@ -120,7 +188,7 @@ def find_top(aid):
         print(item[0], item[1])
 
     user_input = '-1'
-    while user_input is not '':
+    while user_input != '':
         # return when they are satisfied
         user_input = input('\nPress Enter To Return\n')
     return
@@ -280,6 +348,7 @@ def search_for_artist():
     draw_artist_info(artists[int(choice)-1])
     return
 
+
 def draw_screen(user):
     if user['user_type'] == 0: # account does not exist
         create_account()
@@ -325,14 +394,31 @@ def create_account():
     db.insert_new_user(new_user_id, new_user_name, new_user_pwd)
 
 def start_session(username):
-    db.start_session(username)
+    # check if session already started
+    session_exist = db.check_sessions(username)
+    user_input = ''
+    if session_exist:
+        print('Session Already Started.\n Would you like to end current and start another?')
+        while (user_input.upper() != 'YES' or user_input.upper()!='NO'):
+            user_input = input('')
+            if user_input.upper() == 'YES':
+                end_session(username)
+                db.start_session(username)
+                input('Session Started.\nPress Enter To Continue.')
+                return
+            elif user_input.upper() == 'NO':
+                return
+    else:
+        db.start_session(username)
+        input('Session Started.\nPress Enter To Continue.')
+
     return
 
 
 def draw_user_screen(username):
     user_choice = ''
     # print the options and act upon a valid choice being input
-    while (user_choice not in ['4','5']):
+    while (user_choice not in ['5','6']):
         clear_terminal()
         print('Select an option: ')
         print('1. Start a session.')
@@ -346,16 +432,23 @@ def draw_user_screen(username):
             start_session(username)
             continue
         elif user_choice == '2': # search for songs and playlists
+            search_for_song_playlist()
             continue
         elif user_choice == '3': # search for artists
             search_for_artist()
             continue
         elif user_choice == '4' or user_choice.upper() == 'END': # end session and return to login screen
+            end_session(username)
             continue 
         elif user_choice == '5' or user_choice.upper() == 'LOGOUT': # logout
-            continue 
+            session_exist = db.check_sessions(username)
+            if session_exist:
+                end_session(username)
+            continue
         elif user_choice == '6' or user_choice.upper() == 'EXIT': # exit
-            # must implement if session: end_session()
+            session_exist = db.check_sessions(username)
+            if session_exist:
+                end_session(username)
             db.commit_connection()
             db.close_connection()
             exit(0)
